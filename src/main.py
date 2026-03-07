@@ -1,20 +1,19 @@
 import pandas as pd
 from pathlib import Path
-from dask.distributed import Client
-from config import load_config
-from processing import process_date_folder
+from src.config import load_config
+from src.processing import SentinelProcessor
 
 
 def main() -> None:
-    """Main entry point for the Sentinel processing pipeline."""
+    """
+    Script principal de traitement des données Sentinel-2 en POO.
+    """
+    # 1. Chargement de la configuration
     config = load_config()
 
-    # Initialize Dask client
-    client = Client(
-        n_workers=config["dask"]["n_workers"],
-        threads_per_worker=config["dask"]["threads_per_worker"],
-    )
-    print(f"Dask dashboard available at: {client.dashboard_link}")
+    # 2. Initialisation du processeur (moteur de calcul)
+    # L'objet SentinelProcessor gère lui-même son client Dask.
+    processor = SentinelProcessor(config)
 
     input_dir = Path("input")
     output_dir = Path("output")
@@ -22,23 +21,28 @@ def main() -> None:
 
     all_dfs = []
 
-    # Iterate over date-named folders
+    # 3. Parcours des dossiers de dates
     for date_folder in input_dir.iterdir():
         if date_folder.is_dir():
-            print(f"Processing folder: {date_folder.name}")
-            results = process_date_folder(date_folder, config)
-            all_dfs.extend(results)
+            print(f"--- Traitement du dossier : {date_folder.name} ---")
+            results = processor.process_date_folder(date_folder)
+            if results:
+                all_dfs.extend(results)
 
+    # 4. Fusion des résultats et sauvegarde
     if all_dfs:
         final_df = pd.concat(all_dfs, ignore_index=True)
-        # Drop rows with NaN if no data was found for some dates
+        # On ne garde que les dates où au moins un indice est présent
         final_df = final_df.dropna(subset=config["indices"], how="all")
 
         output_path = output_dir / "sentinel_time_series.parquet"
         final_df.to_parquet(output_path, index=False)
-        print(f"Successfully saved results to {output_path}")
+        print(f"Succès ! Résultats sauvegardés dans : {output_path}")
     else:
-        print("No data processed.")
+        print("Aucune donnée n'a pu être traitée.")
+
+    # 5. Nettoyage final
+    processor.close()
 
 
 if __name__ == "__main__":

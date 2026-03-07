@@ -23,4 +23,7 @@ dependencies = [
     "plotly>=6.5.2",
     "zarr>=3.1.5",
     "matplotlib>=3.10.8",
+    "osmnx>=2.1.0",
+    "folium>=0.20.0",
+    "mapclassify>=2.10.0",
 ]
