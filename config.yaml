@@ -1,13 +1,21 @@
 # Satellite indices to calculate
 indices:
-  - NDVI
-  - NDWI
+  - NDRE2
+  # - NDWI
 
 # STAC API configuration
 stac_api_url: "https://earth-search.aws.element84.com/v1"
-collection: "sentinel-2-l2a"
+collection: "sentinel-2-c1-l2a"
 
 # Dask configuration
 dask:
   threads_per_worker: 4
-  n_workers: 4
+  n_workers: 2
+
+# Output options
+save_zarr: false
+debug_cloud: true
+
+# Spatial batching grid size in degrees
+batch_size_deg: 2
+

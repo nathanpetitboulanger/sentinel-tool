@@ -9,6 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
+# All folders
 /data
 /input
 /output
+/storage
+/logs
